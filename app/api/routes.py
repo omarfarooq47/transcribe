@@ -30,6 +30,7 @@ async def create_transcription(
 @router.get(
     "/transcriptions/{job_id}",
     response_model=JobStatusResponse,
+    response_model_exclude_none=True,
 )
 def get_transcription(job_id: str, db: Session = Depends(get_db)) -> JobStatusResponse:
     job = jobs_service.get_job(db, job_id)
