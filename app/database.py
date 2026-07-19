@@ -28,3 +28,16 @@ def init_db() -> None:
     from app import models  # noqa: F401
 
     Base.metadata.create_all(bind=engine)
+    _ensure_sqlite_columns()
+
+
+def _ensure_sqlite_columns() -> None:
+    """Add columns introduced after initial create_all (SQLite has no ALTER via ORM)."""
+    if not settings.database_url.startswith("sqlite"):
+        return
+
+    with engine.begin() as conn:
+        rows = conn.exec_driver_sql("PRAGMA table_info(transcription_jobs)").fetchall()
+        existing = {row[1] for row in rows}
+        if "segments" not in existing:
+            conn.exec_driver_sql("ALTER TABLE transcription_jobs ADD COLUMN segments TEXT")

@@ -29,6 +29,9 @@ celery.conf.update(
     task_track_started=True,
     worker_prefetch_multiplier=1,
     task_acks_late=True,
+    broker_connection_retry_on_startup=True,
+    # Prefer a single process locally: Whisper is heavy and prefork multiplies RAM.
+    worker_concurrency=1,
 )
 
 
@@ -129,6 +132,7 @@ def transcribe_audio(self, job_id: str) -> dict[str, str]:
             job_id,
             transcript=result["text"],
             language=result["language"],
+            segments=result["segments"],
         )
         return {"job_id": job_id, "status": "COMPLETED"}
     finally:

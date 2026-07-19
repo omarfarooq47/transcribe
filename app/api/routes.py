@@ -41,6 +41,7 @@ def get_transcription(job_id: str, db: Session = Depends(get_db)) -> JobStatusRe
             status=job.status,
             transcript=job.transcript,
             language=job.language,
+            segments=jobs_service.get_segments(job),
         )
     if job.status == JobStatus.FAILED:
         return JobStatusResponse(

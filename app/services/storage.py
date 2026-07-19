@@ -119,3 +119,14 @@ def resolve_upload_path(stored_path: str) -> Path:
     if not path.is_file():
         raise FileNotFoundError(f"Audio file not found: {stored_path}")
     return path
+
+
+def read_transcript_output(
+    job_id: str,
+    settings: Settings | None = None,
+) -> dict[str, Any] | None:
+    settings = settings or get_settings()
+    path = settings.output_dir / f"{job_id}.json"
+    if not path.is_file():
+        return None
+    return json.loads(path.read_text(encoding="utf-8"))

@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import uuid
 from pathlib import Path
+from typing import Any
 
 from fastapi import UploadFile
 from sqlalchemy.orm import Session
@@ -86,16 +87,28 @@ def mark_completed(
     job_id: str,
     transcript: str,
     language: str,
+    segments: list[dict[str, Any]] | None = None,
 ) -> TranscriptionJob:
     job = get_job(db, job_id)
     job.status = JobStatus.COMPLETED
     job.transcript = transcript
     job.language = language
+    job.segments = segments or []
     job.error_message = None
     db.commit()
     db.refresh(job)
     logger.info("Transcription completed for job %s (language=%s)", job_id, language)
     return job
+
+
+def get_segments(job: TranscriptionJob) -> list[dict[str, Any]]:
+    if job.segments:
+        return job.segments
+    # Fallback for jobs completed before segments were persisted in the DB.
+    output = storage.read_transcript_output(job.job_id)
+    if output and isinstance(output.get("segments"), list):
+        return output["segments"]
+    return []
 
 
 def mark_failed(db: Session, job_id: str, error_message: str) -> TranscriptionJob:

@@ -67,17 +67,24 @@ pip install -r requirements.txt
 
 ## Run
 
-Start the API and worker in two terminals:
+You need **three** processes: Redis, the API, and a Celery worker.
+
+If jobs stay at `QUEUED`, the worker is almost certainly not running.
 
 ```bash
-# Terminal 1 — API
+# Terminal 1 — Redis (if not already up)
+docker compose up -d
+
+# Terminal 2 — API
 source .venv/bin/activate
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
-# Terminal 2 — Celery worker
+# Terminal 3 — Celery worker (required for status to leave QUEUED)
 source .venv/bin/activate
-celery -A app.celery_app.celery worker --loglevel=info
+celery -A app.celery_app.celery worker --loglevel=info --concurrency=1
 ```
+
+On first start the worker downloads the Whisper model (~140MB for `base`); that can take a minute before transcription begins.
 
 Interactive docs: [http://localhost:8000/docs](http://localhost:8000/docs)
 
@@ -137,7 +144,15 @@ When completed:
   "job_id": "4afab682-3f59-4c8d-a08d-b5fd4d2b8a71",
   "status": "COMPLETED",
   "transcript": "...",
-  "language": "en"
+  "language": "en",
+  "segments": [
+    {
+      "id": 0,
+      "start": 0.0,
+      "end": 4.2,
+      "text": " Hello, this is a sample."
+    }
+  ]
 }
 ```
 

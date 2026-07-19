@@ -16,3 +16,4 @@ outputs/*
 .env
 .DS_Store
 *.log
+*.env
